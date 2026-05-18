@@ -17,7 +17,7 @@ title: Additional resources
 - [A HackerNews clone](https://github.com/sveltejs/sites/tree/master/sites/hn.svelte.dev)
 - [`svelte.dev`](https://github.com/sveltejs/svelte.dev)
 
-また、SvelteKit ユーザーが GitHub で [#sveltekit](https://github.com/topics/sveltekit) や [#sveltekit-template](https://github.com/topics/sveltekit-template) というトピックを付けて多くの例を公開しており、[Svelte Society のサイト](https://sveltesociety.dev/templates?category=sveltekit) にも例が公開されています。なお、これらはメンテナーによって検証されておらず、最新ではない可能性もありますのでご注意ください。
+SvelteKit users have also published plenty of examples on GitHub, under the [#sveltekit](https://github.com/topics/sveltekit) and [#sveltekit-template](https://github.com/topics/sveltekit-template) topics, as well as on [the Svelte Society site](https://sveltesociety.dev/recipe/sveltekit-templates-and-examples-e789ed397e7f38fc). Note that these have not been vetted by the maintainers and may not be up to date.
 
 ## サポート <!--Support-->
 

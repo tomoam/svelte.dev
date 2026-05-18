@@ -8,11 +8,10 @@ SvelteKit アプリの構築を始めるのに最も簡単な方法は `npx sv c
 ```sh
 npx sv create my-app
 cd my-app
-npm install
 npm run dev
 ```
 
-最初のコマンドでは、TypeScript などの基本的なツールをセットアップするかどうか選択して、`my-app` ディレクトリに新しいプロジェクトを生成します。追加のツールの設定に関するポイントについては [Integrations](./integrations) をご覧ください。それ以降のコマンドでは、依存関係をインストールし、[localhost:5173](http://localhost:5173) でサーバーを起動します。
+The first command will scaffold a new project in the `my-app` directory asking if you'd like to set up some basic tooling such as TypeScript. See [the CLI docs](/docs/cli/overview) for information about these options and [the integrations page](./integrations) for pointers on setting up additional tooling. `npm run dev` will then start the development server on [localhost:5173](http://localhost:5173) - make sure you install dependencies before running this if you didn't do so during project creation.
 
 SvelteKit には2つの基本的なコンセプトがあります:
 
@@ -23,4 +22,4 @@ SvelteKit には2つの基本的なコンセプトがあります:
 
 ## エディタのセットアップ <!--Editor-setup-->
 
-[Visual Studio Code (通称 VS Code)](https://code.visualstudio.com/download) と [Svelte extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) のご使用をおすすめしますが、[他にも数多くのエディタをサポートしています](https://sveltesociety.dev/resources#editor-support)。
+We recommend using [Visual Studio Code (aka VS Code)](https://code.visualstudio.com/download) with [the Svelte extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), but [support also exists for numerous other editors](https://sveltesociety.dev/collection/editor-support-c85c080efc292a34).

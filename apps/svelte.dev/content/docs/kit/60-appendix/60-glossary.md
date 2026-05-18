@@ -15,6 +15,10 @@ SvelteKit では、デフォルトでクライアントサイドレンダリン�
 
 Rendering on the edge refers to rendering an application in a content delivery network (CDN) near the user. Edge rendering allows the request and response for a page to travel a shorter distance thus improving latency.
 
+## Hybrid app
+
+SvelteKit uses a hybrid rendering mode by default where it loads the initial HTML from the server (SSR), and then updates the page contents on subsequent navigations via client-side rendering (CSR).
+
 ## ハイドレーション(Hydration) <!--Hydration-->
 
 Svelte コンポーネントは、何らかの状態を保存し、状態が更新されると DOM を更新します。SSR 中にデータをフェッチするとき、デフォルトでは SvelteKit はこのデータを保存し、サーバーレンダリングされた HTML と一緒にクライアントに送信します。それからコンポーネントは、同じ API エンドポイントを再度呼び出すことなく、クライアント側でそのデータを使用して初期化されます。そして Svelte はハイドレーション(Hydration)と呼ばれるプロセスで DOM が想定通りの状態にあることをチェックしてイベントリスナーをアタッチします。コンポーネントが完全にハイドレートされると、新しく作成された Svelte コンポーネントと同じように、プロパティの変更に反応(react)することができます。
@@ -33,11 +37,12 @@ Traditional applications that render each page view on the server — such as th
 
 プリレンダリング(Prerendering)とは、ビルド時にページのコンテンツを計算し、表示のために HTML を保存しておくことを意味します。このアプローチは旧来のサーバーレンダリングページと同じ利点を持ちつつ、訪問者ごとにページを再計算する必要がないため、訪問者数の増加に対してほぼ無償でスケールします。トレードオフとしては、ビルドプロセスのコストがより高くなり、プリレンダリングされたコンテンツはアプリケーションの新しいバージョンをデプロイすることでしか更新できなくなります。
 
-全てのページがプリレンダリングできるわけではありません。基本的なルールは次の通りです: コンテンツがプリレンダリング可能であると言うためには、それを直接表示する2人のユーザーが、サーバーから同じコンテンツを取得できなけれならず、かつ、そのページには [actions](form-actions) が含まれていてはいけません。全てのユーザーが同じプリレンダリングコンテンツを見ることができるのであれば、ページのパラメータに基づいてロードされるコンテンツはプリレンダリングが可能である点にご注意ください。
+For content to be prerenderable, any two users hitting it directly must get the same content from the server, and the page must not contain [actions](form-actions). Note that you can still prerender content that is loaded based on the page's parameters as long as all users will be seeing the same prerendered content. Prerendering all of your pages is also known as [Static Site Generation](#SSG).
 
 プリレンダリングされるページは静的なコンテンツに限りません。クライアントサイドでユーザ固有のデータをフェッチしてレンダリングする場合は、パーソナライズされたページを構築することができます。ただし、前述の通り、そのコンテンツに対して SSR を行わないことによるデメリットが発生することにご注意ください。
 
 SvelteKit では、[`prerender` ページオプション](page-options#prerender) と、`svelte.config.js` の [`prerender` コンフィグ](configuration#prerender) によってプリレンダリングをコントロールできます。
+
 
 ## PWA
 
@@ -51,18 +56,18 @@ SvelteKit では、デフォルトでクライアントサイドルーティン�
 
 ## SPA
 
-シングルページアプリ(single-page app (SPA))とは、サーバーへの全てのリクエストで単一のHTMLをロードし、コンテンツのクライアントサイドレンダリングをリクエストされたURLに基づいて行うアプリケーションのことです。全てのナビゲーションはクライアントサイドで(クライアントサイドルーティングと呼ばれるプロセスで)処理され、ページごとのコンテンツは更新されるが共通のレイアウト要素はほとんど更新されません。SPA は SSR を提供しないため、パフォーマンスと SEO 悪化します。しかし、SEOが重要ではない、ユーザーが一貫したコンピューティング環境からアプリケーションにアクセスすることがわかっているような、ログインの背後にある複雑なビジネスアプリケーションなどの場合は、これらの欠点による大きな影響を受けません。
+A single-page app (SPA) is an application in which all requests to the server load a single HTML file which then does client-side rendering based on the requested URL. All navigation is handled on the client-side in a process called client-side routing with per-page contents being updated and common layout elements remaining largely unchanged. Throughout this site, when we refer to a SPA, we use this definition where a SPA simply serves an empty shell on the initial request. It should not be confused with a [hybrid app](#Hybrid-app), which serves HTML on the initial request. It has a large performance impact by forcing two network round trips before rendering can begin. Because SPA mode has large negative performance and SEO impacts, it is recommended only in very limited circumstances such as when being wrapped in a mobile app.
 
-SvelteKit では、[`adapter-static` を使って SPA を構築](single-page-apps) することができます。
+In SvelteKit, you can [build SPAs with `adapter-static`](single-page-apps).
 
 ## SSG
 
 静的サイト生成(Static Site Generation (SSG))とは、全てのページがプリレンダリングされているサイトを指す用語です。サイトを完全にプリレンダリングすることの利点の1つは、SSRを実行するためのサーバーを維持したり費用を払ったりする必要がないことです。一度生成すれば、そのサイトは CDN から提供することができ、"time to first byte" の優れたパフォーマンスにつながります。このデリバリーモデルはしばしば JAMstack と呼ばれます。
 
-SvelteKit では、[`adapter-static`](adapter-static) を使用したり、[`prerender` ページオプション](page-options#prerender) や `svelte.config.js` の [`prerender` コンフィグ](configuration#prerender) で全ページをプリレンダリングするようにしたりすることで SSG を行うことができます。
+In SvelteKit, you can do static site generation by using [`adapter-static`](adapter-static) or by configuring every page to be [prerendered](#Prerendering) using [the `prerender` page option](page-options#prerender) or [`prerender` config](configuration#prerender) in `svelte.config.js`.
 
 ## SSR
 
-サーバーサイドレンダリング(Server-side rendering (SSR))とは、サーバー上でページコンテンツを生成することです。SSR は一般的に SEO の観点で好まれます。クライアントサイドで生成される動的なコンテンツをインデックスできる検索エンジンもありますが、その場合でもそれに時間がかかることがあります。知覚的なパフォーマンスも改善される傾向にあり、もしJavaScriptが失敗したり無効になっている場合でも([あなたが思うより頻繁に](https://kryogenix.org/code/browser/everyonehasjs.html)発生しています)、ユーザーがアプリにアクセスできるようになります。
+Server-side rendering (SSR) is the generation of the page contents on the server. Returning the page contents from the server via SSR or prerendering is highly preferred for performance and SEO. It significantly improves performance by avoiding the introduction of extra round trips necessary in a SPA, and makes your app accessible to users if JavaScript fails or is disabled (which happens [more often than you probably think](https://kryogenix.org/code/browser/everyonehasjs.html)). While some search engines can index content that is dynamically generated on the client-side, it is likely to take longer even in these cases.
 
 SvelteKit では、デフォルトでページがサーバーサイドレンダリングされます。[`ssr` ページオプション](page-options#ssr) で SSR を無効化できます。

@@ -16,7 +16,8 @@ Netlify にデプロイする場合は、[`adapter-netlify`](https://github.com/
 /// file: svelte.config.js
 import adapter from '@sveltejs/adapter-netlify';
 
-export default {
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
 	kit: {
 		// default options are shown
 		adapter: adapter({
@@ -31,6 +32,8 @@ export default {
 		})
 	}
 };
+
+export default config;
 ```
 
 そして、プロジェクトの root に [netlify.toml](https://docs.netlify.com/configure-builds/file-based-configuration) ファイルを置くのを忘れないでください。このファイルの `build.publish` に基づいて静的なアセットをどこに書き込むか決定します。こちらのサンプルの設定をご覧ください:
@@ -49,14 +52,15 @@ export default {
 
 ## Netlify Edge Functions
 
-SvelteKit は [Netlify Edge Functions](https://docs.netlify.com/netlify-labs/experimental-features/edge-functions/) をサポートしています。`adapter` 関数に `edge: true` オプションを渡すと、サイト訪問者に近い場所にデプロイされる Deno ベースの edge function でサーバーサイドレンダリングが行われるようになります。`false` を設定した場合 (デフォルト)、サイトは Node ベースの Netlify Functions にデプロイされます。
+SvelteKit supports [Netlify Edge Functions](https://docs.netlify.com/build/edge-functions/overview/). If you pass the option `edge: true` to the `adapter` function, server-side rendering will happen in a Deno-based edge function that's deployed close to the site visitor. If set to `false` (the default), the site will deploy to Node-based Netlify Functions.
 
 ```js
 // @errors: 2307
 /// file: svelte.config.js
 import adapter from '@sveltejs/adapter-netlify';
 
-export default {
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
 	kit: {
 		adapter: adapter({
 			// will create a Netlify Edge Function using Deno-based
@@ -65,6 +69,8 @@ export default {
 		})
 	}
 };
+
+export default config;
 ```
 
 ## SvelteKit の機能を代替する Netlify の機能 <!--Netlify-alternatives-to-SvelteKit-functionality-->
@@ -73,14 +79,7 @@ Netlify の機能に依存することなく、SvelteKit が直接提供する�
 
 ### `_headers` and `_redirects`
 
-The [`_headers`](https://docs.netlify.com/routing/headers/#syntax-for-the-headers-file) and [`_redirects`](https://docs.netlify.com/routing/redirects/redirect-options/) files specific to Netlify can be used for static asset responses (like images) by putting them into the project root folder.
-
-### リダイレクトルール(Redirect rules)
-
-コンパイル時に、リダイレクトルールは自動で `_redirects` ファイルに追記されます (もし存在しない場合は、作成されます)。つまり:
-
-- `_redirects` のほうが[優先度が高い](https://docs.netlify.com/routing/redirects/#rule-processing-order)ため、`netlify.toml` にある `[[redirects]]` には決してマッチしません。そのため、ルールは常に [`_redirects` ファイル](https://docs.netlify.com/routing/redirects/#syntax-for-the-redirects-file)に記載してください。
-- `_redirects` には、`/* /foobar/:splat` のようなカスタムの "catch all" ルールを置くべきではありません。そうしないと、自動で追加されたルールが適用されなくなります。Netlify は[最初にマッチしたルール](https://docs.netlify.com/routing/redirects/#rule-processing-order)だけを処理するからです。
+The [`_headers`](https://docs.netlify.com/routing/headers/#syntax-for-the-headers-file) and [`_redirects`](https://docs.netlify.com/routing/redirects/redirect-options/) files specific to Netlify can be used for static asset responses (like images) by putting them into the project root folder. You can also use [`[[redirects]]`](https://docs.netlify.com/routing/redirects/#syntax-for-the-netlify-configuration-file) in your `netlify.toml`.
 
 ### Netlify Forms
 
@@ -93,10 +92,15 @@ The [`_headers`](https://docs.netlify.com/routing/headers/#syntax-for-the-header
 この adapter によって、SvelteKit エンドポイントは [Netlify Functions](https://docs.netlify.com/functions/overview/) としてホストされます。Netlify function ハンドラには追加のコンテキストがあり、[Netlify Identity](https://docs.netlify.com/visitor-access/identity/) 情報が含まれています。このコンテキストは、あなたの hooks や `+page.server` と `+layout.server` エンドポイント の中で `event.platform.context` フィールドを介してアクセスできます。adapter config の `edge` プロパティが `false` の場合は[serverless functions](https://docs.netlify.com/functions/overview/)、`true` の場合は [edge functions](https://docs.netlify.com/edge-functions/overview/#app) となります。
 
 ```js
-// @errors: 2705 7006
+// @errors: 2339
+// @filename: ambient.d.ts
+/// <reference types="@sveltejs/adapter-netlify" />
+// @filename: +page.server.js
+// ---cut---
 /// file: +page.server.js
+/** @type {import('./$types').PageServerLoad} */
 export const load = async (event) => {
-	const context = event.platform.context;
+	const context = event.platform?.context;
 	console.log(context); // shows up in your functions log in the Netlify app
 };
 ```
@@ -118,6 +122,6 @@ export const load = async (event) => {
 
 edge デプロイメントでは `fs` を使用することはできません。
 
-serverless デプロイメントでは `fs` を使用できますが、ファイルがプロジェクトからデプロイメントにコピーされないため、期待通りには動作しないでしょう。代わりに `$app/server` の [`read`]($app-server#read) 関数を使用してファイルにアクセスしてください。edge デプロイメントでは `read` は動作しません（将来的に変更される可能性があります）。
+You _can_ use it in serverless deployments, but it won't work as expected, since files are not copied from your project into your deployment. Instead, use the [`read`]($app-server#read) function from `$app/server` to access your files. It also works inside edge deployments by fetching the file from the deployed public assets location.
 
 その代わりに、`fs` を使用する必要があるルート(route)については[プリレンダリング](page-options#prerender)する必要があります。

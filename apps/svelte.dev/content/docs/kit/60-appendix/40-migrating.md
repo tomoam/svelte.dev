@@ -74,7 +74,7 @@ Sapper アプリでよくあるパターンとして、内部ライブラリを 
 
 ### 名前が変わったファイル <!--Renamed-files-->
 
-ルート(Routes)は曖昧さをなくすためフォルダ名のみで構成されるようになり、`+page.svelte` までのフォルダ名がルート(route)に対応するようになりました。概要は [ルーティングのドキュメント](routing) をご参照ください。以下は 新/旧 の比較です:
+Routes now are made up of the folder name exclusively to remove ambiguity, the folder names leading up to a `+page.svelte` correspond to the route. See [the routing docs](routing) for an overview. The following shows a comparison between old and new routing structures:
 
 | Old                       | New                       |
 | ------------------------- | ------------------------- |

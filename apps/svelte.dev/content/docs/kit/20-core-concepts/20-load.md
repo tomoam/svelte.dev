@@ -189,7 +189,7 @@ export async function load() {
 
 server `load` 関数は _常に_ サーバーで実行されます。
 
-デフォルトでは、universal `load` 関数は、ユーザーがはじめてページにアクセスしたときの SSR 中にサーバーで実行されます。そのあとのハイドレーション中に、[fetch リクエスト](#Making-fetch-requests) で取得したレスポンスを再利用してもう一度実行されます。それ以降の universal `load` 関数の呼び出しは、すべてブラウザで行われます。この動作は [page options](page-options) によってカスタマイズすることができます。[サーバーサイドレンダリング](page-options#ssr) を無効にした場合、SPA となるため、universal `load` 関数は _常に_ クライアントで実行されるようになります。
+By default, universal `load` functions run on the server during SSR when the user first visits your page. They will then run again during hydration, reusing any responses from [fetch requests](#Making-fetch-requests). All subsequent invocations of universal `load` functions happen in the browser. You can customize the behavior through [page options](page-options). If you disable [server-side rendering](page-options#ssr), you'll get an SPA and universal `load` functions _always_ run on the client.
 
 ルート(route)に universal と server の両方の `load` 関数が含まれている場合、server `load` が最初に実行されます。
 
@@ -207,7 +207,7 @@ universal `load` 関数は、`LoadEvent` を引数にとって呼び出されま
 
 universal `load` 関数は、任意の値(カスタムクラスやコンポーネントコンストラクタなどを含む)を含むオブジェクトを返すことができます。
 
-server `load` 関数は、[devalue](https://github.com/rich-harris/devalue) でシリアライズできるデータ (つまり JSON で表現できるものに加え、`BigInt`、`Date`、`Map`、`Set`、`RegExp` や、繰り返し/循環参照など) を返さなければなりません。なぜならこれらのデータはネットワークで転送されるからです。データには [promise](#Streaming-with-promises) を含めることができ、その場合はブラウザにストリーミングされます。カスタムの型をシリアライズ/デシリアライズする必要がある場合は、[transport hooks](https://svelte.jp/docs/kit/hooks#Universal-hooks-transport) を使用してください。
+A server `load` function must return data that can be serialized with [devalue](https://github.com/rich-harris/devalue) — anything that can be represented as JSON plus things like `BigInt`, `Date`, `Map`, `Set` and `RegExp`, or repeated/cyclical references — so that it can be transported over the network. Your data can include [promises](#Streaming-with-promises), in which case it will be streamed to browsers. If you need to serialize/deserialize custom types, use [transport hooks](hooks#Universal-hooks-transport).
 
 ### どちらを使用すべきか <!--When-to-use-which-->
 
@@ -745,7 +745,7 @@ export function requireLogin() {
 		const redirectTo = url.pathname + url.search;
 		const params = new URLSearchParams({ redirectTo });
 
-		redirect(307, `/login?${params}`);
+		redirect(303, `/login?${params}`);
 	}
 
 	return locals.user;

@@ -9,4 +9,4 @@ title: Icons
 
 ## Svelte <!--Svelte-->
 
-[Svelte用のアイコンライブラリ](https://www.sveltesociety.dev/packages?category=icons) は数多くあります。アイコンライブラリを選択する際は、アイコンごとに `.svelte` ファイルを提供するものは避けることをお勧めします。これらのライブラリは数千の `.svelte` ファイルを持つ可能性があり、[Viteの依存関係最適化](https://vite.dev/guide/dep-pre-bundling.html) を大幅に遅くしてしまいます。これは [`vite-plugin-svelte`のFAQで説明されている](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/faq.md#what-is-going-on-with-vite-and-pre-bundling-dependencies) ように、アイコンを umbrella import と subpath import の両方で読み込んでしまうことで、パフォーマンスの問題が顕著になる可能性があるためです。
+There are many [icon libraries for Svelte](/packages#icons). When choosing an icon library, it is recommended to avoid those that provide a `.svelte` file per icon, as these libraries can have thousands of `.svelte` files which really slow down [Vite's dependency optimization](https://vite.dev/guide/dep-pre-bundling.html). This can become especially pathological if the icons are imported both via an umbrella import and subpath import [as described in the `vite-plugin-svelte` FAQ](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/faq.md#what-is-going-on-with-vite-and-pre-bundling-dependencies).

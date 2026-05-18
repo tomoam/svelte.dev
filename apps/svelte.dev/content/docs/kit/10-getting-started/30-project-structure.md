@@ -20,7 +20,8 @@ my-project/
 │ ├ error.html
 │ ├ hooks.client.js
 │ ├ hooks.server.js
-│ └ service-worker.js
+│ ├ service-worker.js
+│ └ instrumentation.server.js
 ├ static/
 │ └ [your static assets]
 ├ tests/
@@ -49,12 +50,15 @@ my-project/
   - `%sveltekit.assets%` — [`paths.assets`](configuration#paths) が指定されている場合は [`paths.assets`](configuration#paths)、指定されていない場合は [`paths.base`](configuration#paths) への相対パス
   - `%sveltekit.nonce%` — マニュアルで含めるリンクやスクリプトの [CSP](configuration#csp) nonce (使用する場合)
   - `%sveltekit.env.[NAME]%` - これはレンダリング時に環境変数の `[NAME]` に置き換えられます。この環境変数は [`publicPrefix`](configuration#env) で始まる必要があります (通常は `PUBLIC_` です)。もしマッチしない場合は `''` にフォールバックします。
+  - `%sveltekit.version%` — the app version, which can be specified with the [`version`](configuration#version) configuration
 - `error.html` は、全てが失敗したときにレンダリングされるページです。以下のプレースホルダーを含めることができます:
   - `%sveltekit.status%` — HTTP ステータス
   - `%sveltekit.error.message%` — エラーメッセージ
 - `hooks.client.js` にはクライアントの [hooks](hooks) を記述します
 - `hooks.server.js` にはサーバーの [hooks](hooks) を記述します
 - `service-worker.js` には [service worker](service-workers) を記述します
+- `instrumentation.server.js` contains your [observability](observability) setup and instrumentation code
+  - Requires adapter support. If your adapter supports it, it is guaranteed to run prior to loading and running your application code.
 
 (プロジェクトに `.js` と `.ts` のどちらのファイルが含まれるかについては、プロジェクトの作成時に TypeScript の使用を選択したかどうかによります。)
 
@@ -62,7 +66,7 @@ my-project/
 
 ### static
 
-`robots.txt` や `favicon.png` など、そのままサーブされる静的なアセットをここに含めます。
+Any static assets that should be served without any alteration to the name — such as `robots.txt` — go in here. It's generally preferable to minimize the number of assets in `static/` and instead `import` them. Using an `import` allows [Vite's built-in handling](images#Vite's-built-in-handling) to give a unique name to an asset based on a hash of its contents so that it can be cached.
 
 ### tests
 
@@ -80,7 +84,7 @@ my-project/
 
 ### tsconfig.json
 
-`npx sv create` の際に型チェックを追加した場合、このファイル (または `.ts` ファイルより型チェックされた `.js` ファイルのほうがお好みであれば `jsconfig.json`) で TypeScript の設定を行います。SvelteKit は特定の設定に依存しているため、独自の `.svelte-kit/tsconfig.json` ファイルを生成し、あなたの設定を `extends` (拡張)しています。
+This file (or `jsconfig.json`, if you prefer type-checked `.js` files over `.ts` files) configures TypeScript, if you added typechecking during `npx sv create`. Since SvelteKit relies on certain configuration being set a specific way, it generates its own `.svelte-kit/tsconfig.json` file which your own config `extends`. To make changes to top-level options such as `include` and `exclude`, we recommend extending the generated config; see the [`typescript.config` setting](configuration#typescript) for more details.
 
 ### vite.config.js
 

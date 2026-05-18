@@ -13,13 +13,25 @@ npx sv create [options] [path]
 
 ## オプション <!--Options-->
 
+### `--from-playground <url>`
+
+Create a SvelteKit project from a [playground](/playground) URL. This downloads all playground files, detects external dependencies, and sets up a complete SvelteKit project structure with everything ready to go.
+
+Example:
+
+```sh
+npx sv create --from-playground="https://svelte.dev/playground/hello-world"
+```
+
 ### `--template <name>`
 
 使用するプロジェクトテンプレート：
 
 - `minimal` — 新しいアプリのための最小限のスキャフォールディング
-- `demo` — JavaScript無しで動作するワードパズルゲームを備えたデモアプリ
+- `demo` — JavaScript無しで動作するワード推測パズルゲームを備えたデモアプリ
 - `library` — Svelteライブラリのためのテンプレートで、`svelte-package`でセットアップされています
+  <!-- TODO: JYC: Uncomment this when the addon template is ready -->
+  <!-- - `addon` — template for a community add-on, ready to be tested & published -->
 
 ### `--types <option>`
 
@@ -31,6 +43,16 @@ npx sv create [options] [path]
 ### `--no-types`
 
 型チェックの追加を防ぎます。推奨されません！
+
+### `--add [add-ons...]`
+
+Add add-ons to the project in the `create` command. Following the same format as [sv add](sv-add#Usage).
+
+Example:
+
+```sh
+npx sv create --add eslint prettier [path]
+```
 
 ### `--no-add-ons`
 
@@ -50,16 +72,6 @@ npx sv create [options] [path]
 
 依存関係のインストールを行いません。
 
-<!-- ## Programmatic interface
+### `--no-dir-check`
 
-```js
-// TODO: this gives type checking errors in the docs site when not commented out. Need to release sv, install it in the site, and uncomment this.
-// import { create } from 'sv';
-
-// // todo: check if this is right
-// create(cwd, {
-// 	// add your options here
-// 	// todo: list available option
-// });
-```
--->
+Skip checking whether the target directory is empty.

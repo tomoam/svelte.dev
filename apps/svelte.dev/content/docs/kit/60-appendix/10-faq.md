@@ -138,13 +138,13 @@ onMount(() => {
 
 別の方法は、頭痛の種である CORS をバイパスするためのプロキシーをセットアップすることです。本番環境では、`/api` などのパスを API サーバーに書き換えます(rewrite)。ローカルの開発環境では、Vite の [`server.proxy`](https://vitejs.dev/config/server-options.html#server-proxy) オプションを使用します。
 
-本番環境で書き換え(rewrite)をセットアップする方法は、デプロイ先のプラットフォームに依存します。もし、書き換える方法がなければ、代わりに [API route](./routing#server) を追加します:
+How to set up rewrites in production will depend on your deployment platform. If rewrites aren't an option, you could alternatively add an [API route](./routing#server):
 
 ```js
 /// file: src/routes/api/[...path]/+server.js
 /** @type {import('./$types').RequestHandler} */
 export function GET({ params, url }) {
-	return fetch(`https://my-api-server.com/${params.path + url.search}`);
+	return fetch(`https://example.com/${params.path + url.search}`);
 }
 ```
 
@@ -155,12 +155,7 @@ export function GET({ params, url }) {
 `adapter-node` は、プロダクションモードで使用するためのミドルウェアを自分のサーバで構築します。開発モードでは、Vite プラグインを使用して Vite にミドルウェア(middleware) を追加することができます。例えば:
 
 ```js
-// @errors: 2322
-// @filename: ambient.d.ts
-declare module '@sveltejs/kit/vite'; // TODO this feels unnecessary, why can't it 'see' the declarations?
-
-// @filename: index.js
-// ---cut---
+/// file: vite.config.js
 import { sveltekit } from '@sveltejs/kit/vite';
 
 /** @type {import('vite').Plugin} */
@@ -188,7 +183,7 @@ export default config;
 
 ### Yarn 2 で動作しますか？ <!--Does-it-work-with-Yarn-2-->
 
-多少は。Plug'n'Play 機能、通称 'pnp' は動きません (Node のモジュール解決アルゴリズムから逸脱しており、SvelteKitが[数多くのライブラリ](https://blog.sindresorhus.com/get-ready-for-esm-aa53530b3f77)とともに使用している[ネイティブの JavaScript モジュールではまだ動作しません](https://github.com/yarnpkg/berry/issues/638))。[`.yarnrc.yml`](https://yarnpkg.com/configuration/yarnrc#nodeLinker) で `nodeLinker: 'node-modules'` を使用して pnp を無効にできますが、おそらく npm や [pnpm](https://pnpm.io/) を使用するほうが簡単でしょう。同じように高速で効率的ですが、互換性に頭を悩ませることはありません。
+Sort of. The Plug'n'Play feature, aka 'pnp', is broken (it deviates from the Node module resolution algorithm, and [doesn't yet work with native JavaScript modules](https://github.com/yarnpkg/berry/issues/638) which SvelteKit — along with an [increasing number of packages](https://github.com/wooorm/npm-esm-vs-cjs) — uses). You can use `nodeLinker: 'node-modules'` in your [`.yarnrc.yml`](https://yarnpkg.com/configuration/yarnrc#nodeLinker) file to disable pnp, but it's probably easier to just use npm or [pnpm](https://pnpm.io/), which is similarly fast and efficient but without the compatibility headaches.
 
 ### Yarn 3 を使用するにはどうすれば良いですか？ <!--How-do-I-use-with-Yarn-3-->
 

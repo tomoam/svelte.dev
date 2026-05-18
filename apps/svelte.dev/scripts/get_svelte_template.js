@@ -1,31 +1,34 @@
 // @ts-check
 import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { create } from 'sv';
 
-// This download the currente Vite template from Github, adjusts it to our needs, and saves it to static/svelte-template.json
+// This downloads the current Vite template from GitHub, adjusts it to our needs, and saves it to static/svelte-template.json
 // This is used by the Svelte REPL as part of the "download project" feature
 
 const force = process.env.FORCE_UPDATE === 'true';
-const output_file = fileURLToPath(new URL('../static/svelte-template.json', import.meta.url));
-const output_dir = fileURLToPath(new URL('./svelte-template', import.meta.url));
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const output_file = path.resolve(__dirname, '../static/svelte-template.json');
+const output_dir = path.resolve(__dirname, './svelte-template');
 
 try {
 	if (!force && statSync(output_file)) {
-		console.info(`[update/template] ${output_file} exists. Skipping`);
+		const relative = path.relative(process.cwd(), output_file);
+		console.info(`[update/template] ${relative} exists. Skipping`);
 		process.exit(0);
 	}
 } catch {
 	// create Svelte-Kit skelton app
-	create(output_dir, { template: 'minimal', types: 'typescript', name: 'your-app' });
+	create({ cwd: output_dir, template: 'minimal', types: 'typescript', name: 'your-app' });
 
 	function get_all_files(dir) {
 		const files = [];
 		const items = readdirSync(dir, { withFileTypes: true });
 
 		for (const item of items) {
-			const full_path = join(dir, item.name);
+			const full_path = path.join(dir, item.name);
 			if (item.isDirectory()) {
 				files.push(...get_all_files(full_path));
 			} else {
@@ -62,7 +65,7 @@ try {
 
 	// add CSS styles from playground to the project
 	const html = readFileSync(
-		join(output_dir, '../../../../packages/repl/src/lib/Output/srcdoc/index.html'),
+		path.join(output_dir, '../../../../packages/repl/src/lib/Output/srcdoc/index.html'),
 		{ encoding: 'utf-8' }
 	);
 	const css = html

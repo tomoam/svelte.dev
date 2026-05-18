@@ -16,6 +16,8 @@
 	let { runes, onchange, workspace, can_migrate, migrate, download }: Props = $props();
 
 	let input = $state() as HTMLInputElement;
+
+	// svelte-ignore state_referenced_locally
 	let input_value = $state(workspace.current.name);
 
 	async function close_edit(file: File) {
@@ -175,6 +177,16 @@
 				<Checkbox bind:checked={workspace.tailwind}></Checkbox>
 			</label>
 
+			<label class="option" aria-disabled={!workspace.supports_async}>
+				<span>Async mode</span>
+				<Checkbox
+					disabled={!workspace.supports_async}
+					checked={workspace.compiler_options.async}
+					onchange={() =>
+						workspace.update_compiler_options({ async: !workspace.compiler_options.async })}
+				></Checkbox>
+			</label>
+
 			<button disabled={!can_migrate} onclick={migrate}>Migrate to Svelte 5, if possible</button>
 
 			<label class="option">
@@ -182,13 +194,26 @@
 				<input
 					value={workspace.svelte_version}
 					placeholder="latest"
-					onchange={(ev) => (workspace.svelte_version = ev.currentTarget.value || 'latest')}
+					onchange={(ev) => workspace.set_svelte_version(ev.currentTarget.value || 'latest', true)}
 				/>
 			</label>
 
 			{#if download}
 				<button onclick={download}>Download app</button>
 			{/if}
+
+			<button
+				class="copy-button"
+				title="Copy `npx sv create --from-playground=&quot;...&quot;` to clipboard"
+				aria-label="Copy `npx sv create --from-playground=&quot;...&quot;` to clipboard"
+				onclick={() => {
+					navigator.clipboard.writeText(
+						`npx sv create --from-playground="${window.location.href}"`
+					);
+				}}
+			>
+				Set up locally
+			</button>
 		</Toolbox>
 	</div>
 </div>
@@ -330,6 +355,10 @@
 	.option {
 		height: 3.6rem;
 
+		&[aria-disabled='true'] {
+			color: var(--sk-fg-4);
+		}
+
 		input {
 			background: transparent;
 			border: none;
@@ -359,5 +388,43 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		fill: none;
+	}
+
+	.copy-button {
+		position: relative;
+
+		&::before,
+		&::after {
+			content: '';
+			display: block;
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			right: 0;
+			top: 0;
+			background: currentColor;
+			mask: no-repeat calc(100% - 1rem) 50% / 1.6rem 1.6rem;
+			transition: opacity 0.2s;
+			transition-delay: 0.6s;
+		}
+
+		&::before {
+			mask-image: url(icons/copy-to-clipboard);
+		}
+
+		&::after {
+			mask-image: url(icons/check);
+			opacity: 0;
+		}
+
+		&:active::before {
+			opacity: 0;
+			transition: none;
+		}
+
+		&:active::after {
+			opacity: 1;
+			transition: none;
+		}
 	}
 </style>

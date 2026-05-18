@@ -96,18 +96,16 @@ For external URLs, use `window.location = url` instead of calling `goto(url)`.
 ```dts
 function goto(
 	url: string | URL,
-	opts?:
-		| {
-				replaceState?: boolean | undefined;
-				noScroll?: boolean | undefined;
-				keepFocus?: boolean | undefined;
-				invalidateAll?: boolean | undefined;
-				invalidate?:
-					| (string | URL | ((url: URL) => boolean))[]
-					| undefined;
-				state?: App.PageState | undefined;
-		  }
-		| undefined
+	opts?: {
+		replaceState?: boolean | undefined;
+		noScroll?: boolean | undefined;
+		keepFocus?: boolean | undefined;
+		invalidateAll?: boolean | undefined;
+		invalidate?:
+			| (string | URL | ((url: URL) => boolean))[]
+			| undefined;
+		state?: App.PageState | undefined;
+	}
 ): Promise<void>;
 ```
 
@@ -146,7 +144,7 @@ function invalidate(
 
 ## invalidateAll
 
-Causes all `load` functions belonging to the currently active page to re-run. Returns a `Promise` that resolves when the page is subsequently updated.
+Causes all `load` and `query` functions belonging to the currently active page to re-run. Returns a `Promise` that resolves when the page is subsequently updated.
 
 <div class="ts-block">
 
@@ -259,11 +257,9 @@ Returns a `Promise` that resolves when the page is subsequently updated.
 ```dts
 function refreshAll({
 	includeLoadFunctions
-}?:
-	| {
-			includeLoadFunctions?: boolean;
-	  }
-	| undefined): Promise<void>;
+}?: {
+	includeLoadFunctions?: boolean;
+}): Promise<void>;
 ```
 
 </div>

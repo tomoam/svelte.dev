@@ -15,7 +15,7 @@ SEO で最も重要なのは、高品質なコンテンツを作ること、そ�
 
 ### パフォーマンス <!--Performance-->
 
-[Core Web Vitals](https://web.dev/vitals/#core-web-vitals) のような指標は検索エンジンのランクに影響を与えます。Svelte と SvelteKit はオーバーヘッドが最小限であるため、ハイパフォーマンスなサイトを簡単に構築できです。Google の [PageSpeed Insights](https://pagespeed.web.dev/) や [Lighthouse](https://developers.google.com/web/tools/lighthouse) で、ご自身のサイトをテストすることができます。詳細は [パフォーマンスのページ](performance) をお読みください。
+Signals such as [Core Web Vitals](https://web.dev/vitals/#core-web-vitals) impact search engine ranking. Because Svelte and SvelteKit introduce minimal overhead, they make it easier to build high performance sites. You can test your site's performance using Google's [PageSpeed Insights](https://pagespeed.web.dev/) or [Lighthouse](https://developers.google.com/web/tools/lighthouse). With just a few key actions like using SvelteKit's default [hybrid rendering](glossary#Hybrid-app) mode and [optimizing your images](images), you can greatly improve your site's speed. Read [the performance page](performance) for more details.
 
 ### URLの正規化 <!--Normalized-urls-->
 
@@ -40,12 +40,12 @@ export async function GET() {
 		`
 		<?xml version="1.0" encoding="UTF-8" ?>
 		<urlset
-			xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"
-			xmlns:xhtml="https://www.w3.org/1999/xhtml"
-			xmlns:mobile="https://www.google.com/schemas/sitemap-mobile/1.0"
-			xmlns:news="https://www.google.com/schemas/sitemap-news/0.9"
-			xmlns:image="https://www.google.com/schemas/sitemap-image/1.1"
-			xmlns:video="https://www.google.com/schemas/sitemap-video/1.1"
+			xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+			xmlns:xhtml="http://www.w3.org/1999/xhtml"
+			xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"
+			xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+			xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+			xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
 		>
 			<!-- <url> elements go here -->
 		</urlset>`.trim(),

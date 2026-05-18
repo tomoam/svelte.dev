@@ -140,7 +140,7 @@ Setting the `sideEffects` field in `package.json` can help the bundler to be mor
 }
 ```
 
-> If the scripts in your library have side effects, ensure that you update the `sideEffects` field. All scripts are marked as side effect free by default in newly created projects. If a file with side effects is incorrectly marked as having no side effects, it can result in broken functionality.
+> [!NOTE] If the scripts in your library have side effects, ensure that you update the `sideEffects` field. All scripts are marked as side effect free by default in newly created projects. If a file with side effects is incorrectly marked as having no side effects, it can result in broken functionality.
 
 If your package has files with side effects, you can specify them in an array:
 
@@ -158,7 +158,7 @@ This will treat only the specified files as having side effects.
 
 ## TypeScript
 
-あなたが TypeScript を使用していないとしても、あなたのライブラリの型定義を公開したほうがよいでしょう。あなたのライブラリを使用する人が、適切なインテリセンスを得られるようになるからです。`@sveltejs/package` は型生成のプロセスをほとんど隠ぺい(opaque)してくれます。デフォルトでは、ライブラリをパッケージングする際、JavaScript、TypeScript、Svelte ファイル向けに型定義を自動生成します。あなたは [exports](#Anatomy-of-a-package.json-exports) map の `types` condition が正しいファイルを指しているか確認するだけです。`npx sv create` でライブラリプロジェクトを初期化すると、root export に `types` condition が設定されます。
+You should ship type definitions for your library even if you don't use TypeScript yourself so that people who do get proper intellisense when using your library. `@sveltejs/package` makes the process of generating types mostly opaque to you. By default, when packaging your library, type definitions are auto-generated for JavaScript, TypeScript and Svelte files. All you need to ensure is that the `types` condition in the [exports](#Anatomy-of-a-package.json-exports) map points to the correct files. When initialising a library project through `npx sv create`, this is automatically set up for the root export.
 
 しかし、root export 以外のもの、例えば `your-library/foo` インポートを提供する場合などは、型定義を提供する上でさらなる注意が必要です。残念ながら、TypeScript はデフォルトでは `{ "./foo": { "types": "./dist/foo.d.ts", ... }}` のような export に対して `types` condition を解決しません。代わりに、ライブラリの root からの相対で `foo.d.ts` を探します (つまり、`your-library/dist/foo.d.ts` ではなく `your-library/foo.d.ts` です)。これを修正する方法として、選択肢が2つあります:
 
@@ -188,7 +188,7 @@ This will treat only the specified files as having side effects.
 
 ## ベストプラクティス <!--Best-practices-->
 
-他の SvelteKit プロジェクトからのみ使用されることを想定しているのでなければ、`$app/environment` などの SvelteKit 固有のモジュールをあなたのパッケージで使用するのは避けたほうがよいでしょう。例えば、`import { browser } from '$app/environment'` を使用するのではなく、`import { BROWSER } from 'esm-env'` ([esm-env ドキュメント参照](https://github.com/benmccann/esm-env)) を使用します。また、`$app/state` や `$app/navigation` などに直接頼るのではなく、現在の URL や navigation action をプロパティとして渡すこともできます。より一般的な方法でアプリを書くことによって、テストや UI デモなどのツールのセットアップも簡単になります。
+You should avoid using SvelteKit-specific modules like `$app/environment` in your packages unless you intend for them to only be consumable by other SvelteKit projects. E.g. rather than using `import { browser } from '$app/environment'` you could use `import { BROWSER } from 'esm-env'` ([see esm-env docs](https://github.com/benmccann/esm-env)). You may also wish to pass in things like the current URL or a navigation action as a prop rather than relying directly on `$app/state`, `$app/navigation`, etc. Writing your app in this more generic fashion will also make it easier to set up tools for testing, UI demos and so on.
 
 [エイリアス](configuration#alias) は `svelte.config.js` (`vite.config.js` や `tsconfig.json` ではなく) を経由して追加するようにしてください。`svelte-package` で処理されるからです。.
 
@@ -243,6 +243,7 @@ You can create so-called declaration maps (`d.ts.map` files) by setting `"declar
 - `-w`/`--watch` — `src/lib` にあるファイルの変更を関ししてパッケージを再ビルドします
 - `-i`/`--input` — パッケージの全てのファイルを含む入力ディレクトリ。デフォルトは `src/lib` です
 - `-o`/`--output` — 処理されたファイルが書き込まれる出力ディレクトリ。`package.json` の `exports` はここにあるファイルを指さなければならず、`files` の配列にはこのフォルダを含めなければいけません。デフォルトは `dist` です
+- `-p`/`--preserve-output` — prevent deletion of the output directory before packaging. Defaults to `false`, which means that the output directory will be emptied first
 - `-t`/`--types` — 型定義 (`d.ts` ファイル) を作成するかどうか。エコシステムのライブラリの品質を向上させるため、作成することを強く推奨します。デフォルトは `true` です
 - `--tsconfig` - tsconfig または jsconfig へのパス。指定されない場合は、ワークスペースのパスで次の上位の tsconfig/jsconfig を検索します。
 

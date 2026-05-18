@@ -24,29 +24,13 @@ export default {
 
 この実験的なフラグは Svelte 6 で削除される予定です。
 
-## Boundary(境界) <!--Boundaries-->
+## Synchronized updates
 
-現在、 `await` は `pending` snippetを持つ [`<svelte:boundary>`](svelte-boundary) の内部でのみ使えます:
+When an `await` expression depends on a particular piece of state, changes to that state will not be reflected in the UI until the asynchronous work has completed, so that the UI is not left in an inconsistent state. In other words, in an example like this...
 
+<!-- codeblock:start {"title":"Synchronized updates"} -->
 ```svelte
-<svelte:boundary>
-	<MyApp />
-
-	{#snippet pending()}
-		<p>loading...</p>
-	{/snippet}
-</svelte:boundary>
-```
-
-この制限は、 Svelte が非同期のサーバーサイドレンダリングをサポートするようになれば解除されます([注意事項](#Caveats)を参照)。
-
-> [!NOTE] [プレイグラウンド](/playground)では、アプリは空の pending snippet を持つ boudary 内でレンダリングされるため、自分で作成しなくても `await` を使えます。
-
-## 同期された更新 <!--Synchronized-updates-->
-
-ある `await` 式が特定の state に依存しているとき、その state への変更は、非同期処理が完了するまでUIに反映されません。UIが矛盾した状態にならないようにするためです。つまり、[こちら](/playground/untitled#H4sIAAAAAAAAE42QsWrDQBBEf2VZUkhYRE4gjSwJ0qVMkS6XYk9awcFpJe5Wdoy4fw-ycdykSPt2dpiZFYVGxgrf2PsJTlPwPWTcO-U-xwIH5zli9bminudNtwEsbl-v8_wYj-x1Y5Yi_8W7SZRFI1ZYxy64WVsjRj0rEDTwEJWUs6f8cKP2Tp8vVIxSPEsHwyKdukmA-j6jAmwO63Y1SidyCsIneA_T6CJn2ZBD00Jk_XAjT4tmQwEv-32eH6AsgYK6wXWOPPTs6Xy1CaxLECDYgb3kSUbq8p5aaifzorCt0RiUZbQcDIJ10ldH8gs3K6X2Xzqbro5zu1KCHaw2QQPrtclvwVSXc2sEC1T-Vqw0LJy-ClRy_uSkx2ogHzn9ADZ1CubKAQAA)のような例では...
-
-```svelte
+<!--- file: App.svelte --->
 <script>
 	let a = $state(1);
 	let b = $state(2);
@@ -62,6 +46,7 @@ export default {
 
 <p>{a} + {b} = {await add(a, b)}</p>
 ```
+<!-- codeblock:end -->
 
 ...`a` の値をインクリメントしても、 `<p>` の内容は次のようには _なりません。_
 
@@ -78,8 +63,8 @@ export default {
 Svelte は可能な限り非同期処理を並行におこないます。例えば、マークアップ内に2つの `await` 式があるとき...
 
 ```svelte
-<p>{await one()}</p>
-<p>{await two()}</p>
+<p>{await one(x)}</p>
+<p>{await two(y)}</p>
 ```
 
 ...それらは独立した式ですので、 _見た目上は_ 順次実行されているように見えても、両方の関数が同時に実行されます。
@@ -87,20 +72,27 @@ Svelte は可能な限り非同期処理を並行におこないます。例え�
 これは、`<script>` 内や非同期関数内の連続した `await` 式には適用されません。これらは他の非同期JavaScriptと同じように実行されます。例外として、独立した `$derived` 式は、最初の作成時には順次実行されますが、そのあとは独立して更新されます:
 
 ```js
-async function one() { return 1; }
-async function two() { return 2; }
+/** @param {number} x */
+async function one(x) { return x; }
+/** @param {number} y */
+async function two(y) { return y; }
+let x = $state(1);
+let y = $state(2);
 // ---cut---
-// これらは最初は順次実行されますが、
-// そのあとは独立して更新されます
-let a = $derived(await one());
-let b = $derived(await two());
+// `b` will not be created until `a` has resolved,
+// but once created they will update independently
+// even if `x` and `y` update simultaneously
+let a = $derived(await one(x));
+let b = $derived(await two(y));
 ```
 
 > [!NOTE] このようなコードを書くと、Svelteから [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) 警告が表示されます。
 
 ## ローディング状態の表示<!--Indicating-loading-states-->
 
-`await` によるローディング状態は、それを囲むもっとも内側の `<svelte:boundary>` に定義された [`pending`](svelte-boundary#Properties-pending) によって表示されます。それに加えて、 [`$effect.pending()`]($effect#$effect.pending) を使っても、非同期処理が進行中であることを示せます。
+To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](svelte-boundary#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
+
+After the contents of a boundary have resolved for the first time and have replaced the `pending` snippet, you can detect subsequent async work with [`$effect.pending()`]($effect#$effect.pending). This is what you would use to display a "we're asynchronously validating your input" spinner next to a form field, for example.
 
 また、 [`settled()`](svelte#settled) を使うと、現在の更新が完了したときに解決(resolve)される Promise を取得できます:
 
@@ -134,11 +126,75 @@ async function onclick() {
 
 `await` 式のエラーは、もっとも近い [error boundary](svelte-boundary) に伝播します。
 
+## Server-side rendering
+
+Svelte supports asynchronous server-side rendering (SSR) with the `render(...)` API. To use it, simply await the return value:
+
+```js
+/// file: server.js
+import { render } from 'svelte/server';
+import App from './App.svelte';
+
+const { head, body } = +++await+++ render(App);
+```
+
+> [!NOTE] If you're using a framework like SvelteKit, this is done on your behalf.
+
+If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, that snippet will be rendered while the rest of the content is ignored. All `await` expressions encountered outside boundaries with `pending` snippets will resolve and render their contents prior to `await render(...)` returning.
+
+> [!NOTE] In the future, we plan to add a streaming implementation that renders the content in the background.
+
+## Forking
+
+The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when (for example) users signal an intent to navigate.
+
+```svelte
+<script>
+	import { fork } from 'svelte';
+	import Menu from './Menu.svelte';
+
+	let open = $state(false);
+
+	/** @type {import('svelte').Fork | null} */
+	let pending = null;
+
+	function preload() {
+		pending ??= fork(() => {
+			open = true;
+		});
+	}
+
+	function discard() {
+		pending?.discard();
+		pending = null;
+	}
+</script>
+
+<button
+	onfocusin={preload}
+	onfocusout={discard}
+	onpointerenter={preload}
+	onpointerleave={discard}
+	onclick={() => {
+		pending?.commit();
+		pending = null;
+
+		// in case `pending` didn't exist
+		// (if it did, this is a no-op)
+		open = true;
+	}}
+>open menu</button>
+
+{#if open}
+	<!-- any async work inside this component will start
+	     as soon as the fork is created -->
+	<Menu onclose={() => open = false} />
+{/if}
+```
+
 ## 注意事項 <!--Caveats-->
 
 実験的な機能であるため、 `await` 扱いの詳細(および `$effect.pending()` のような関連API)は、セマンティックバージョニングのメジャーリリース外では破壊的変更がおこなわれる可能性があります。ただし、そのような変更は最小限に抑えるつもりです。
-
-現在、サーバーサイドレンダリングは同期的です。SSR中に `pending` snippet を持つ `<svelte:boundary>` が検出されたとき、 `pending` snippet のみがレンダリングされます。
 
 ## 破壊的変更 <!--Breaking-changes-->
 

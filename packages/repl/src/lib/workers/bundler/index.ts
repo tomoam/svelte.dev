@@ -65,18 +65,17 @@ self.addEventListener('message', async (event: MessageEvent<BundleMessageData>) 
 				setTimeout(async () => {
 					if (current_id !== uid) return;
 
-					const result = await bundle(
-						svelte,
-						svelte_version,
-						uid,
-						files,
-						options,
-						can_use_experimental_async
-					);
+					const use_async = can_use_experimental_async && options.async;
+
+					const result = await bundle(svelte, svelte_version, uid, files, options, use_async);
 
 					console.log('[bundle worker result]', result);
 
-					if (JSON.stringify(result.error) === JSON.stringify(ABORT)) return;
+					// error object might be augmented, see https://github.com/rollup/rollup/blob/76a3b8ede4729a71eb522fc29f7d550a4358827b/docs/plugin-development/index.md#thiserror,
+					// hence only check that the specific abort property we set is there
+					if ((result.error as any)?.svelte_bundler_aborted === ABORT.svelte_bundler_aborted) {
+						return;
+					}
 					if (result && uid === current_id) postMessage(result);
 				});
 			} catch (e) {
@@ -101,17 +100,18 @@ function get_svelte(svelte_version: string) {
 	self.postMessage({ type: 'status', message: `fetching svelte@${svelte_version}` });
 	ready_version = svelte_version;
 	ready = load_svelte(svelte_version || 'latest');
-	ready.then(({ version }) => {
+	ready.then(({ version, can_use_experimental_async }) => {
 		ready_version = version;
 		self.postMessage({
 			type: 'version',
-			message: version
+			version,
+			supports_async: can_use_experimental_async
 		});
 	});
 	return ready;
 }
 
-const ABORT = { aborted: true };
+const ABORT = { svelte_bundler_aborted: true };
 
 let previous: {
 	key: string;
@@ -145,7 +145,7 @@ async function init_tailwind(user_css = '') {
 
 	return await tailwindcss.compile(tailwind_base, {
 		loadStylesheet: async (id, base) => {
-			return { content: tailwind_files[id], base };
+			return { content: tailwind_files[id], base, path: '' };
 		}
 	});
 }

@@ -13,8 +13,6 @@ hooks ファイルは2つあり、どちらもオプションです:
 
 これらのモジュールのコードはアプリケーションの起動時に実行されるので、データベースクライアントの初期化などに有用です。
 
-> [!NOTE] これらのファイルの場所は [`config.kit.files.hooks`](configuration#files) で設定できます。
-
 ## Server hooks
 
 以下の hooks は `src/hooks.server.js` に追加することができます:
@@ -161,7 +159,7 @@ export const getTodo = query(v.string(), (id) => {
 });
 ```
 
-...but it is called with something that doesn't match the schema — such as a number (e.g `await getTodos(1)`) — then validation will fail, the server will respond with a [400 status code](https://http.dog/400), and the function will throw with the message 'Bad Request'.
+...but it is called with something that doesn't match the schema — such as a number (e.g. `await getTodos(1)`) — then validation will fail, the server will respond with a [400 status code](https://http.dog/400), and the function will throw with the message 'Bad Request'.
 
 To customise this message and add additional properties to the error object, implement `handleValidationError`:
 
@@ -185,12 +183,12 @@ Be thoughtful about what information you expose here, as the most likely reason 
 
 [予期せぬエラー](errors#Unexpected-errors)が、ロード中やレンダリング中、またはエンドポイントからスローされると、この関数が `error`、`event`、`status` コード、`message` を引数にとって呼び出されます。これによって以下の2つのことが可能になります:
 
-- エラーをログに残すことができます
-- エラーからメッセージやスタックトレースなどの機密情報を省略し、ユーザーに見せても安全なカスタムの表現を生成することができます。戻り値のデフォルトは `{ message }` で、`$page.error` の値となります。
+- you can log the error
+- you can generate a custom representation of the error that is safe to show to users, omitting sensitive details like messages and stack traces. The returned value, which defaults to `{ message }`, becomes the value of `page.error`.
 
 あなたのコード (またはあなたのコードから呼び出されたライブラリのコード) からスローされたエラーの場合、ステータスは 500 となり、message は "Internal Error" になります。`error.message` にはユーザーに公開されるべきではない機密情報が含まれている可能性がありますが、`message` は安全です (一般的なユーザーにとっては無意味ではありますが)。
 
-`$page.error` オブジェクトに型安全な方法で情報を追加するには、`App.Error` interface を宣言することで想定する形にすることができます (適切なフォールバックの動作を保証するため、`message: string` を含む必要があります)。これにより、例えばユーザーがテクニカルサポートスタッフとの対応の際に引用することができるトラッキング ID を付加することができます:
+To add more information to the `page.error` object in a type-safe way, you can customize the expected shape by declaring an `App.Error` interface (which must include `message: string`, to guarantee sensible fallback behavior). This allows you to — for example — append a tracking ID for users to quote in correspondence with your technical support staff:
 
 ```ts
 /// file: src/app.d.ts
@@ -283,6 +281,7 @@ This function runs once, when the server is created or the app starts in the bro
 > [!NOTE] If your environment supports top-level await, the `init` function is really no different from writing your initialisation logic at the top level of the module, but some environments — most notably, Safari — don't.
 
 ```js
+// @errors: 2307
 /// file: src/hooks.server.js
 import * as db from '$lib/server/database';
 
@@ -306,9 +305,8 @@ export async function init() {
 例えば、`src/routes/[[lang]]/about/+page.svelte` というページがあるとして、`/en/about` や `/de/ueber-uns` や `/fr/a-propos` でアクセスできるようにしたいとします。この場合は `reroute` を使用して実装することができます:
 
 ```js
+// @errors: 2345 2304
 /// file: src/hooks.js
-// @errors: 2345
-// @errors: 2304
 
 /** @type {Record<string, string>} */
 const translated = {
@@ -332,9 +330,8 @@ export function reroute({ url }) {
 Since version 2.18, the `reroute` hook can be asynchronous, allowing it to (for example) fetch data from your backend to decide where to reroute to. Use this carefully and make sure it's fast, as it will delay navigation otherwise. If you need to fetch data, use the `fetch` provided as an argument. It has the [same benefits](load#Making-fetch-requests) as the `fetch` provided to `load` functions, with the caveat that `params` and `id` are unavailable to [`handleFetch`](#Server-hooks-handleFetch) because the route is not yet known.
 
 ```js
+// @errors: 2345 2304
 /// file: src/hooks.js
-// @errors: 2345`
-// @errors: 2304
 
 /** @type {import('@sveltejs/kit').Reroute} */
 export async function reroute({ url, fetch }) {
@@ -357,6 +354,7 @@ export async function reroute({ url, fetch }) {
 This is a collection of _transporters_, which allow you to pass custom types — returned from `load` and form actions — across the server/client boundary. Each transporter contains an `encode` function, which encodes values on the server (or returns a falsy value for anything that isn't an instance of the type) and a corresponding `decode` function:
 
 ```js
+// @errors: 2307
 /// file: src/hooks.js
 import { Vector } from '$lib/math';
 

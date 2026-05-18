@@ -22,9 +22,14 @@
 		injectedJS?: string;
 		injectedCSS?: string;
 		previewTheme?: 'light' | 'dark';
+		showOutput?: boolean;
 		onversion?: (version: string) => void;
 		onchange?: () => void;
 		download?: () => void;
+		/**
+		 * Invoked whenever there's a bundler or runtime error
+		 */
+		onerror?: (error: Error) => void;
 	}
 
 	let {
@@ -38,9 +43,11 @@
 		injectedJS = '',
 		injectedCSS = '',
 		previewTheme = 'light',
+		showOutput = true,
 		onversion,
 		onchange = () => {},
-		download
+		download,
+		onerror
 	}: Props = $props();
 
 	// TODO pass in real data
@@ -54,6 +61,7 @@
 
 	const workspace: Workspace = new Workspace([dummy], {
 		initial: 'App.svelte',
+		// svelte-ignore state_referenced_locally
 		svelte_version: svelteVersion,
 		onupdate() {
 			rebundle();
@@ -111,6 +119,7 @@
 			svelte_version: workspace.svelte_version,
 			tailwind: workspace.tailwind,
 			fragments: workspace.compiler_options.fragments,
+			async: workspace.compiler_options.async,
 			aliases: workspace.aliases
 		});
 	}
@@ -122,12 +131,10 @@
 			...workspace.current!,
 			contents: migration!.code
 		});
-
-		rebundle();
 	}
 
 	let width = $state(0);
-	let show_output = $state(false);
+	let toggled = $state(false);
 	let status: string | null = $state(null);
 	let runtime_error: Error | null = $state(null);
 	let status_visible = $state(false);
@@ -135,9 +142,14 @@
 
 	const bundler = BROWSER
 		? new Bundler({
+				// svelte-ignore state_referenced_locally
 				svelte_version: svelteVersion,
-				onversion: (version) => {
-					workspace.svelte_version = version;
+				onversion: (version, supports_async) => {
+					workspace.set_svelte_version(version);
+					workspace.supports_async = supports_async;
+					if (!supports_async && workspace.compiler_options.async) {
+						workspace.update_compiler_options({ async: false });
+					}
 					onversion?.(version);
 				},
 				onstatus: (message) => {
@@ -185,6 +197,18 @@
 		$toggleable = mobile && orientation === 'columns' && embedded !== 'output-only';
 	});
 
+	$effect(() => {
+		if (runtime_error) {
+			onerror?.(runtime_error);
+		}
+	});
+
+	$effect(() => {
+		if (bundler?.result?.error) {
+			onerror?.(bundler.result.error as Error);
+		}
+	});
+
 	let runes = $derived(
 		workspace.current.name.endsWith('.svelte.js') ||
 			(workspace.current_compiled?.result?.metadata.runes ?? false)
@@ -202,10 +226,10 @@
 	class:toggleable={$toggleable}
 	bind:clientWidth={width}
 >
-	<div class="viewport" class:output={show_output}>
+	<div class="viewport" class:output={showOutput} class:transition={toggled}>
 		<SplitPane
 			id="main"
-			type={orientation === 'rows' ? 'vertical' : 'horizontal'}
+			type={orientation}
 			pos="{embedded === 'output-only'
 				? 0
 				: mobile || fixed
@@ -235,7 +259,7 @@
 						{injectedCSS}
 						{previewTheme}
 						{workspace}
-						runtimeError={runtime_error}
+						bind:runtimeError={runtime_error}
 					/>
 				</section>
 			{/snippet}
@@ -243,7 +267,15 @@
 	</div>
 
 	{#if $toggleable}
-		<ScreenToggle bind:checked={show_output} />
+		<ScreenToggle
+			bind:checked={
+				() => showOutput,
+				(v) => {
+					toggled ||= true;
+					showOutput = v;
+				}
+			}
+		/>
 	{/if}
 </div>
 
@@ -296,11 +328,14 @@
 	.toggleable .viewport {
 		width: 200%;
 		height: calc(100% - var(--sk-pane-controls-height));
-		transition: transform 0.3s;
 	}
 
 	.toggleable .viewport.output {
 		transform: translate(-50%);
+	}
+
+	.toggleable .viewport.transition {
+		transition: transform 0.3s;
 	}
 
 	/* on mobile, override the <SplitPane> controls */
